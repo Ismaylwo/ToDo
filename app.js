@@ -66,12 +66,19 @@ const elements = {
 
 const defaultCategories = ["Здоровье", "Учёба", "Работа", "Личное", "Другое"];
 
-const todayISO = () => new Date().toISOString().split("T")[0];
+const localDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const todayISO = () => localDateKey(new Date());
 const formatDate = (date) => new Intl.DateTimeFormat("ru-RU", { dateStyle: "full" }).format(date);
 const dateDaysAgoISO = (days) => {
   const d = new Date();
   d.setDate(d.getDate() - days);
-  return d.toISOString().split("T")[0];
+  return localDateKey(d);
 };
 
 const showToast = (message, isError = false) => {
@@ -234,7 +241,7 @@ const isTaskScheduledForDate = (task, date) => {
     return Array.isArray(task.days) && task.days.includes(day);
   }
   if (task.task_date) {
-    return task.task_date === date.toISOString().split("T")[0];
+    return task.task_date === localDateKey(date);
   }
   return false;
 };
@@ -335,7 +342,7 @@ const buildStatsForRange = (dates) => {
   dates.forEach((date) => {
     const scheduled = state.tasks.filter((task) => isTaskScheduledForDate(task, date));
     total += scheduled.length;
-    const dateKey = date.toISOString().split("T")[0];
+    const dateKey = localDateKey(date);
     scheduled.forEach((task) => {
       if (isTaskDoneForDate(task.id, dateKey)) {
         done += 1;
@@ -463,7 +470,7 @@ const buildCategoryCharts = () => {
 
   dates.forEach((date) => {
     const scheduled = state.tasks.filter((task) => isTaskScheduledForDate(task, date));
-    const dateKey = date.toISOString().split("T")[0];
+    const dateKey = localDateKey(date);
     scheduled.forEach((task) => {
       const category = state.categories.find((cat) => cat.id === task.category_id);
       if (!category) return;
