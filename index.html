@@ -1,0 +1,272 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Todo / Ежедневник</title>
+  <meta name="theme-color" content="#f3b42b" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon-192.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Unbounded:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">✓</span>
+        <div>
+          <p class="brand-title">Todo / Ежедневник</p>
+          <p class="brand-subtitle">Фокус. Прогресс. Результат.</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn" data-view="dashboard">Дашборд</button>
+        <button class="nav-btn" data-view="stats">Статистика</button>
+        <button class="nav-btn" data-view="settings">Настройки</button>
+      </nav>
+      <div class="session">
+        <span id="session-email"></span>
+        <button id="logout-btn" class="ghost">Выйти</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="auth-view" class="view">
+        <div class="auth-hero">
+          <div>
+            <h1>Ежедневник, который работает</h1>
+            <p class="muted">Все задачи, статистика и прогресс — в одном месте. Настройте план дня за пару минут.</p>
+          </div>
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-auth="login">Вход</button>
+            <button class="auth-tab" data-auth="signup">Регистрация</button>
+            <button class="auth-tab" data-auth="reset">Восстановить пароль</button>
+          </div>
+        </div>
+        <div class="auth-panels">
+          <div class="card auth-panel" data-panel="login">
+            <h2>Вход</h2>
+            <form id="login-form" class="stack">
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                Пароль
+                <input type="password" name="password" minlength="6" required />
+              </label>
+              <button type="submit">Войти</button>
+            </form>
+          </div>
+          <div class="card auth-panel hidden" data-panel="signup">
+            <h2>Регистрация</h2>
+            <form id="signup-form" class="stack">
+              <label>
+                Никнейм
+                <input type="text" name="nickname" minlength="2" required />
+              </label>
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                Пароль (мин. 6 символов)
+                <input type="password" name="password" minlength="6" required />
+              </label>
+              <button type="submit">Создать аккаунт</button>
+            </form>
+          </div>
+          <div class="card auth-panel hidden" data-panel="reset">
+            <h2>Восстановление пароля</h2>
+            <form id="reset-form" class="stack">
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <button type="submit">Отправить письмо</button>
+              <p class="muted">Мы пришлём ссылку для сброса пароля.</p>
+            </form>
+            <form id="new-password-form" class="stack hidden">
+              <label>
+                Новый пароль
+                <input type="password" name="password" minlength="6" required />
+              </label>
+              <button type="submit">Обновить пароль</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard-view" class="view hidden">
+        <div class="dashboard-grid">
+          <div class="card hero">
+            <div>
+              <h2 id="greeting">Привет!</h2>
+              <p id="today-date" class="muted"></p>
+            </div>
+            <div class="progress-ring">
+              <div>
+                <p class="label">Сегодня выполнено</p>
+                <p id="today-progress" class="big">0%</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Задачи на сегодня</h3>
+              <button id="toggle-task-form" class="ghost">Добавить задачу</button>
+            </div>
+            <ul id="task-list" class="task-list"></ul>
+          </div>
+
+          <div class="card">
+            <h3>Мотивация дня</h3>
+            <p id="motivation" class="motivation"></p>
+          </div>
+
+          <div class="card">
+            <h3>Быстрая статистика</h3>
+            <div class="stats-grid">
+              <div>
+                <p class="label">Всего</p>
+                <p id="stat-total" class="big">0</p>
+              </div>
+              <div>
+                <p class="label">Выполнено</p>
+                <p id="stat-done" class="big">0</p>
+              </div>
+              <div>
+                <p class="label">Не выполнено</p>
+                <p id="stat-pending" class="big">0</p>
+              </div>
+              <div>
+                <p class="label">Процент</p>
+                <p id="stat-percent" class="big">0%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="task-form-wrapper" class="card hidden">
+          <h3>Новая задача</h3>
+          <form id="task-form" class="task-form">
+            <label>
+              Название
+              <input type="text" name="title" required />
+            </label>
+            <label>
+              Время выполнения
+              <input type="time" name="time" required />
+            </label>
+            <label>
+              Категория
+              <select name="category" id="category-select" required></select>
+            </label>
+            <label class="inline">
+              <input type="checkbox" name="repeat" id="repeat-toggle" />
+              Повторять задачу
+            </label>
+            <div id="days-wrapper" class="days-grid">
+              <label><input type="checkbox" name="days" value="1" />Пн</label>
+              <label><input type="checkbox" name="days" value="2" />Вт</label>
+              <label><input type="checkbox" name="days" value="3" />Ср</label>
+              <label><input type="checkbox" name="days" value="4" />Чт</label>
+              <label><input type="checkbox" name="days" value="5" />Пт</label>
+              <label><input type="checkbox" name="days" value="6" />Сб</label>
+              <label><input type="checkbox" name="days" value="0" />Вс</label>
+            </div>
+            <label id="date-wrapper">
+              Дата (если не повторять)
+              <input type="date" name="task_date" />
+            </label>
+            <label>
+              Приоритет (опционально)
+              <select name="priority">
+                <option value="">—</option>
+                <option value="low">Низкий</option>
+                <option value="medium">Средний</option>
+                <option value="high">Высокий</option>
+              </select>
+            </label>
+            <label>
+              Описание (опционально)
+              <textarea name="description" rows="3"></textarea>
+            </label>
+            <button type="submit">Сохранить</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="stats-view" class="view hidden">
+        <div class="stats-layout">
+          <div class="card">
+            <div class="card-head">
+              <h3>Статистика по времени</h3>
+              <select id="range-select">
+                <option value="day">День</option>
+                <option value="week">Неделя</option>
+                <option value="month">Месяц</option>
+                <option value="year">Год</option>
+              </select>
+            </div>
+            <canvas id="time-chart" height="200"></canvas>
+          </div>
+          <div class="card">
+            <h3>Статистика по категориям</h3>
+            <div class="chart-grid">
+              <canvas id="category-chart" height="200"></canvas>
+              <canvas id="category-percent-chart" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings-view" class="view hidden">
+        <div class="settings-grid">
+          <div class="card">
+            <h3>Профиль</h3>
+            <form id="nickname-form" class="stack">
+              <label>
+                Новый никнейм
+                <input type="text" name="nickname" required />
+              </label>
+              <button type="submit">Сохранить</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Тема</h3>
+            <label class="inline">
+              <input type="checkbox" id="theme-toggle" />
+              Тёмная тема
+            </label>
+          </div>
+          <div class="card">
+            <h3>Уведомления</h3>
+            <label class="inline">
+              <input type="checkbox" id="notifications-toggle" />
+              Включить уведомления
+            </label>
+            <p class="muted">Уведомления работают в активной вкладке и через Service Worker.</p>
+          </div>
+          <div class="card">
+            <h3>Аккаунт</h3>
+            <button id="logout-btn-2" class="ghost">Выйти</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Данные сохраняются в Supabase. Только ваши задачи видны вам.</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+</body>
+</html>
