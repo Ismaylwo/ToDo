@@ -42,7 +42,10 @@ const elements = {
   toggleTaskForm: document.getElementById("toggle-task-form"),
   taskFormWrapper: document.getElementById("task-form-wrapper"),
   taskForm: document.getElementById("task-form"),
+  taskSubmitBtn: document.querySelector("#task-form button[type=\"submit\"]"),
   categorySelect: document.getElementById("category-select"),
+  categoryEmpty: document.getElementById("category-empty"),
+  createDefaultsBtn: document.getElementById("create-defaults"),
   repeatToggle: document.getElementById("repeat-toggle"),
   daysWrapper: document.getElementById("days-wrapper"),
   dateWrapper: document.getElementById("date-wrapper"),
@@ -116,14 +119,22 @@ const updateTodayDate = () => {
   elements.todayDate.textContent = formatDate(new Date());
 };
 
-const ensureDefaultCategories = async () => {
+const createDefaultCategories = async () => {
   if (!state.session) return;
-  if (state.categories.length) return;
   const inserts = defaultCategories.map((name) => ({
     user_id: state.session.user.id,
     name,
   }));
-  await supabase.from("categories").insert(inserts);
+  const { error } = await supabase.from("categories").insert(inserts);
+  if (error) {
+    showToast("Не удалось создать категории", true);
+  }
+};
+
+const ensureDefaultCategories = async () => {
+  if (!state.session) return;
+  if (state.categories.length) return;
+  await createDefaultCategories();
 };
 
 const ensureProfileRow = async (user) => {
@@ -188,11 +199,14 @@ const fetchSettings = async () => {
 };
 
 const fetchCategories = async () => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("categories")
     .select("id, name")
     .eq("user_id", state.session.user.id)
     .order("name");
+  if (error) {
+    showToast("Не удалось загрузить категории", true);
+  }
   state.categories = data || [];
 };
 
@@ -231,6 +245,11 @@ const isTaskDoneForDate = (taskId, dateISOKey) => {
 
 const renderCategories = () => {
   elements.categorySelect.innerHTML = "";
+  const isEmpty = state.categories.length === 0;
+  elements.categoryEmpty.classList.toggle("hidden", !isEmpty);
+  if (elements.taskSubmitBtn) {
+    elements.taskSubmitBtn.disabled = isEmpty;
+  }
   state.categories.forEach((cat) => {
     const option = document.createElement("option");
     option.value = cat.id;
@@ -537,6 +556,10 @@ const markTaskDone = async (taskId) => {
 
 const handleTaskForm = async (event) => {
   event.preventDefault();
+  if (state.categories.length === 0) {
+    showToast("Сначала создайте категории", true);
+    return;
+  }
   const form = new FormData(elements.taskForm);
   const repeat = form.get("repeat") === "on";
   const days = form.getAll("days").map((value) => Number(value));
@@ -687,6 +710,12 @@ const setupAuthHandlers = () => {
 const setupTaskUI = () => {
   elements.toggleTaskForm.addEventListener("click", () => {
     elements.taskFormWrapper.classList.toggle("hidden");
+  });
+
+  elements.createDefaultsBtn.addEventListener("click", async () => {
+    await createDefaultCategories();
+    await fetchCategories();
+    renderCategories();
   });
 
   const updateRepeatUI = () => {

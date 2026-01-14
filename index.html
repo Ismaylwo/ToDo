@@ -156,6 +156,10 @@
         <div id="task-form-wrapper" class="card hidden">
           <h3>Новая задача</h3>
           <form id="task-form" class="task-form">
+            <div id="category-empty" class="muted hidden">
+              Категории не найдены. Создайте стандартные категории, чтобы добавить задачу.
+              <button type="button" id="create-defaults" class="ghost">Создать категории</button>
+            </div>
             <label>
               Название
               <input type="text" name="title" required />
